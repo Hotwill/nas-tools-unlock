@@ -1,7 +1,5 @@
-import re
 from threading import Lock
 
-import log
 from app.downloader import Downloader
 from app.filter import Filter
 from app.helper import DbHelper, RssHelper
@@ -12,6 +10,8 @@ from app.subscribe import Subscribe
 from app.utils import ExceptionUtils, Torrent
 from app.utils.commons import singleton
 from app.utils.types import MediaType, SearchType
+from app.bt.xl720 import XL720
+from app.bt.common import *
 
 lock = Lock()
 
@@ -30,7 +30,13 @@ class Rss:
 
     def __init__(self):
         self.init_config()
-
+        self.download_sites = [XL720("https://www.xl720.com", "https://www.xl720.com/?s={key_word}"),
+                               DownloadSite("https://www.dbmp4.com"),
+                               DownloadSite("https://www.bdys03.com", "https://www.bdys03.com/search/{key_word}"),
+                               # DownloadSite("https://www.btdx8.com", "https://www.btdx8.com/?s={key_word}"),
+                               # DownloadSite("https://www.dy2018.com"),
+                               # DownloadSite("https://www.ciligod.com/movie")
+                               ]
     def init_config(self):
         self.media = Media()
         self.downloader = Downloader()
@@ -41,10 +47,117 @@ class Rss:
         self.rsshelper = RssHelper()
         self.subscribe = Subscribe()
 
+    def download_tv_on_www(self):
+        # 读取电视剧订阅
+        tv_keys = self.dbhelper.get_rss_tvs(state='R') + self.dbhelper.get_rss_tvs(state='D')
+
+        if not tv_keys:
+            log.warn("【RSS】没有正在订阅的电视剧")
+        else:
+            log.info("【RSS】电视剧订阅清单：%s" % " ".join('%s' % key.NAME for key in tv_keys))
+
+        for tv_info in tv_keys:
+            name = tv_info.NAME
+            year = tv_info.YEAR
+            season = int(tv_info.SEASON.removeprefix('S'))
+            tmdbid = tv_info.TMDBID
+            lack = tv_info.LACK
+            mtype = MediaType.TV
+
+            if tmdbid:
+                media_info = MetaInfo(title="{0} {1} 第{2}季".format(name, year, season), mtype=mtype)
+                media_info.set_tmdb_info(self.media.get_tmdb_info(mtype=mtype, tmdbid=tmdbid))
+                if not media_info or not media_info.tmdb_info:
+                    log.error("获取媒体信息失败：{0}".format(name))
+            else:
+                # 根据名称和年份查询
+                media_info = self.media.get_media_info(title=name,
+                                                       mtype=mtype,
+                                                       strict=True if year else False)
+
+            exist_flag, rss_no_exists, _ = self.downloader.check_exists_medias(meta_info=media_info)
+
+            print(media_info.get_title_string())
+            print(media_info.tmdb_id)
+            print(rss_no_exists)
+            if (media_info.tmdb_id != 0 and media_info.tmdb_id not in rss_no_exists) or lack == '0':
+                log.info("更新订阅状态为'F'：{0}".format(name))
+                # delete_rss_tv(name, year, media_info.get_season_string())
+                self.dbhelper.update_rss_tv_state(title=name, year=year, season=media_info.get_season_string(), state='F')
+                continue
+
+            if not rss_no_exists:
+                continue
+
+            for no_exist_info in rss_no_exists[media_info.tmdb_id]:
+                print(no_exist_info)
+                season = no_exist_info["season"]
+                episodes = no_exist_info["episodes"]
+
+                log.info("更新{0}第{1}季缺失集数为{2}".format(name, season, len(episodes)))
+                self.dbhelper.update_rss_tv_lack(name, year, media_info.get_season_string(), None, episodes)
+
+                if exist_flag and not episodes:
+                    episodes = range(1, no_exist_info["total_episodes"] + 1)
+                if media_info.category == "欧美剧":
+                    key_word = "{0} 第{1}季".format(media_info.title, media_info.begin_season)
+                else:
+                    key_word = media_info.title
+
+                print(exist_flag, key_word, episodes)
+                for site in self.download_sites:
+                    try:
+                        site.download(key_word, year, episodes, media_info.get_message_image())
+                    except Exception as e:
+                        log.error("在网站[{}]上下载发生异常：{}".format(site.home_page, str(e)))
+                        continue
+
+    def download_movie_on_www(self):
+        # 读取电影订阅
+        movie_keys = self.dbhelper.get_rss_movies(state='R') + self.dbhelper.get_rss_movies(state='D')
+        if not movie_keys:
+            log.warn("【RSS】没有正在订阅的电影")
+        else:
+            log.info("【RSS】电影订阅清单：%s" % " ".join('%s' % key.NAME for key in movie_keys))
+
+        for rss_info in movie_keys:
+            name = rss_info.NAME
+            year = rss_info.YEAR
+            tmdbid = rss_info.TMDBID
+
+            media_info = self.media.get_media_info(tmdbid, name, year, MediaType.MOVIE)
+            if not media_info or not media_info.tmdb_info:
+                log.error("获取媒体信息失败：{0}".format(" ".join(rss_info)))
+
+            exist_flag, _, _ = self.downloader.check_exists_medias(meta_info=media_info)
+            if exist_flag:
+                log.info("更新订阅状态为'F'：{0}".format(name))
+                self.dbhelper.update_rss_movie_state(title=name, year=year, state='F')
+                continue
+
+            for site in self.download_sites:
+                n = site.download(name, year, media_info.get_message_image())
+                if n > 0:
+                    log.info("更新订阅状态为'F'：{0}".format(name))
+                    self.dbhelper.update_rss_movie_state(title=name, year=year, state='F')
+                    break
+
+    def download_on_www(self):
+        try:
+            self.download_movie_on_www()
+        except BaseException as e:
+            log.error("exception: {0}".format(str(e)))
+
+        self.download_tv_on_www()
+
     def rssdownload(self):
         """
         RSS订阅搜索下载入口，由定时服务调用
         """
+
+        # 从互联网上下载订阅的电影和电视剧
+        self.download_on_www()
+
         rss_sites_info = self.sites.get_sites(rss=True)
         if not rss_sites_info:
             return
@@ -301,7 +414,7 @@ class Rss:
                         media_info.set_download_info(download_setting=match_info.get("download_setting"),
                                                      save_path=match_info.get("save_path"))
                         # 插入数据库历史记录
-                        self.rsshelper.insert_rss_torrents(media_info)
+                        # self.rsshelper.insert_rss_torrents(media_info)
                         # 加入下载列表
                         if media_info not in rss_download_torrents:
                             rss_download_torrents.append(media_info)
@@ -562,6 +675,10 @@ class Rss:
             for item in download_items:
                 if not item.rssid:
                     continue
+
+                # 插入数据库历史记录
+                self.rsshelper.insert_rss_torrents(item)
+
                 if item.over_edition:
                     # 更新洗版订阅
                     __update_over_edition(item)

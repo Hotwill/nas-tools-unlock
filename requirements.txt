@@ -112,3 +112,9 @@ websockets==10.3
 Werkzeug==2.2.3
 wsproto==1.2.0
 zhconv==1.4.3
+pyautogui
+pyppeteer
+pywin32
+requests_html
+magic_google
+pypinyin

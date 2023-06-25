@@ -999,10 +999,10 @@ class Downloader:
                             exists_tvs_str = "、".join(["%s" % tv for tv in no_exists_episodes])
                             # 存入总缺失集
                             if len(no_exists_episodes) >= episode_count:
-                                no_item = {"season": season_number, "episodes": [], "total_episodes": episode_count}
+                                no_item = {"season": season_number, "episodes": no_exists_episodes, "total_episodes": episode_count}
                                 log.info(
-                                    "【Downloader】%s 第%s季 缺失 %s 集" % (
-                                        meta_info.get_title_string(), season_number, episode_count))
+                                    "【Downloader】%s 第%s季 缺失集：%s" % (
+                                        meta_info.get_title_string(), season_number, exists_tvs_str))
                                 if search_season:
                                     message_list.append(
                                         "%s 第%s季 缺失 %s 集" % (meta_info.title, season_number, episode_count))

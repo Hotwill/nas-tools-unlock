@@ -1,3 +1,4 @@
+import pypinyin
 import regex as re
 import cn2an
 
@@ -5,6 +6,36 @@ from app.helper.db_helper import DbHelper
 from app.utils.commons import singleton
 from app.utils.exception_utils import ExceptionUtils
 
+def my_replace_name(name: str):
+    db_helper = DbHelper()
+    tv_keys = db_helper.get_rss_tvs()
+    movie_keys = db_helper.get_rss_movies()
+    rss_names = []
+    for e in tv_keys:
+        rss_names.append(e.NAME)
+    for e in movie_keys:
+        rss_names.append(e.NAME)
+    if not rss_names:
+        return name
+
+    for rss_name in rss_names:
+        new_name = ""
+        for i in range(len(rss_name)):
+            if i % 2 == 0:
+                new_name += rss_name[i]
+            else:
+                new_name += pypinyin.lazy_pinyin(rss_name[i])[0][0]
+        name = name.replace(new_name, rss_name)
+
+        new_name = ""
+        for i in range(len(rss_name)):
+            if i % 2 != 0:
+                new_name += rss_name[i]
+            else:
+                new_name += pypinyin.lazy_pinyin(rss_name[i])[0][0]
+        name = name.replace(new_name, rss_name)
+
+    return name
 
 @singleton
 class WordsHelper:
@@ -28,6 +59,9 @@ class WordsHelper:
         used_replaced_words = []
         # 应用集偏移
         used_offset_words = []
+
+        title = my_replace_name(title)
+
         # 应用识别词
         for word_info in self.words_info:
             match word_info.TYPE:
