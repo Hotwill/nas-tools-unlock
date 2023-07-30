@@ -1,3 +1,4 @@
+build-base
 git
 python3-dev
 py3-pip
@@ -15,4 +16,3 @@ redis
 wget
 shadow
 sudo
-g++
