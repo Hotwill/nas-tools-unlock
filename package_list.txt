@@ -15,4 +15,4 @@ redis
 wget
 shadow
 sudo
-build-essential
+g++
