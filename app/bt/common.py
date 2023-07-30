@@ -18,59 +18,72 @@ from magic_google import MagicGoogle
 from app.message import Message
 
 
-def thunder_download1(url: str):
-    # 本地种子文件
-    if url.endswith(".torrent"):
-        os.system(r'"D:\programs\Thunder_11.2.2.1716v2_Green\Thunder\Program\Thunder.exe" {url}'.format(url=url))
-    else:
-        pythoncom.CoInitialize()  # 在多线程环境需要加这行代码
-        thunder = Dispatch('ThunderAgent.Agent64.1')
-        thunder.AddTask(url)
-        thunder.CommitTasks()
-        pythoncom.CoInitialize()
+# def thunder_download1(url: str):
+#     # 本地种子文件
+#     if url.endswith(".torrent"):
+#         os.system(r'"D:\programs\Thunder_11.2.2.1716v2_Green\Thunder\Program\Thunder.exe" {url}'.format(url=url))
+#     else:
+#         pythoncom.CoInitialize()  # 在多线程环境需要加这行代码
+#         thunder = Dispatch('ThunderAgent.Agent64.1')
+#         thunder.AddTask(url)
+#         thunder.CommitTasks()
+#         pythoncom.CoInitialize()
+#
+#     if url.endswith(".torrent") or url.startswith("magnet:") or url.startswith("thunder:"):
+#         time.sleep(10)  # 让磁力链接有足够时间下载到种子
+#
+#         win = None
+#         wins = pyautogui.getWindowsWithTitle("新建任务面板")
+#         if len(wins) != 0:
+#             win = wins[0]
+#         win.activate()
+#
+#         print("screen size: [{0}, {1}]".format(pyautogui.size().width, pyautogui.size().height))
+#         print("win size: ", win.size, "midbottom: ", win.midbottom)
+#
+#         # 从窗口的底部中间的位置开始，向上移动，移动一次，点击一直，这样一定可以点击到”立即下载”按钮
+#         x = win.midbottom.x
+#         y = win.midbottom.y
+#         pyautogui.moveTo(x, y)
+#         a = y - win.size.height / 2
+#         while y > a:
+#             y = y - 10
+#             wins = pyautogui.getWindowsWithTitle("新建任务面板")
+#             if len(wins) != 0:
+#                 print("click position: ", x, y)
+#                 pyautogui.click(x, y)
+#             else:
+#                 break
 
-    if url.endswith(".torrent") or url.startswith("magnet:") or url.startswith("thunder:"):
-        time.sleep(10)  # 让磁力链接有足够时间下载到种子
 
-        win = None
-        wins = pyautogui.getWindowsWithTitle("新建任务面板")
-        if len(wins) != 0:
-            win = wins[0]
-        win.activate()
-
-        print("screen size: [{0}, {1}]".format(pyautogui.size().width, pyautogui.size().height))
-        print("win size: ", win.size, "midbottom: ", win.midbottom)
-
-        # 从窗口的底部中间的位置开始，向上移动，移动一次，点击一直，这样一定可以点击到”立即下载”按钮
-        x = win.midbottom.x
-        y = win.midbottom.y
-        pyautogui.moveTo(x, y)
-        a = y - win.size.height / 2
-        while y > a:
-            y = y - 10
-            wins = pyautogui.getWindowsWithTitle("新建任务面板")
-            if len(wins) != 0:
-                print("click position: ", x, y)
-                pyautogui.click(x, y)
-            else:
-                break
-
+# def thunder_download(url: str):
+#     # 本地种子文件
+#     if url.endswith(".torrent"):
+#         os.system(r'"C:\programs\Thunder_11.2.2.1716v2_Green\Thunder\Program\Thunder.exe" {url}'.format(url=url))
+#     else:
+#         try:
+#             pythoncom.CoInitialize()
+#             thunder = Dispatch('ThunderAgent.Agent64.1')
+#             thunder.AddTask(url)
+#             thunder.CommitTasks()
+#             pythoncom.CoInitialize()
+#         except Exception as e:
+#             log.error("thunder_download exception: {}".format(e))
+#
+#     time.sleep(5)
 
 def thunder_download(url: str):
-    # 本地种子文件
-    if url.endswith(".torrent"):
-        os.system(r'"C:\programs\Thunder_11.2.2.1716v2_Green\Thunder\Program\Thunder.exe" {url}'.format(url=url))
-    else:
-        try:
-            pythoncom.CoInitialize()
-            thunder = Dispatch('ThunderAgent.Agent64.1')
-            thunder.AddTask(url)
-            thunder.CommitTasks()
-            pythoncom.CoInitialize()
-        except Exception as e:
-            log.error("thunder_download exception: {}".format(e))
+    kubespider_url = "http://192.168.1.139:3080/api/v1/download"
+    payload = {
+        "dataSource": url,
+        "path": ""
+    }
+    response = requests.post(kubespider_url, json=payload)
 
-    time.sleep(5)
+    if response.status_code == 200:
+        print("发送下载请求到kubespider成功")
+    else:
+        print("发送下载请求到kubespider失败：", response.text)
 
 
 def is_contain_key_word(s: str, key_word: str):
