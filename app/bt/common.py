@@ -1,20 +1,15 @@
 import asyncio
-import os
 import re
-import time
 from urllib import parse
 from urllib.parse import unquote
 
-import pyautogui
 import pyppeteer
-import pythoncom
 import requests
 import requests_html
 from lxml import etree
-from win32com.client import Dispatch
-import log
 from magic_google import MagicGoogle
 
+import log
 from app.message import Message
 
 
