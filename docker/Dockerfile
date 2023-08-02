@@ -15,7 +15,8 @@ RUN apk add --no-cache --virtual .build-deps \
     && pip install cython \
     && pip install -r https://raw.githubusercontent.com/Hotwill/nas-tools-unlock/master/requirements.txt \
     && apk del --purge .build-deps \
-    && rm -rf /tmp/* /root/.cache /var/cache/apk/*
+    && rm -rf /tmp/* /root/.cache /var/cache/apk/* \
+    && pip cache purge
 COPY --chmod=755 ./rootfs /
 FROM scratch AS APP
 COPY --from=Builder / /
