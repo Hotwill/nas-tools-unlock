@@ -67,7 +67,14 @@ from app.message import Message
 #
 #     time.sleep(5)
 
+download_urls = set()
+
+
 def thunder_download(url: str):
+    if url in download_urls:
+        print("已经下载过，跳过")
+        return
+
     kubespider_url = "http://192.168.1.139:3080/api/v1/download"
     payload = {
         "dataSource": url,
@@ -77,6 +84,7 @@ def thunder_download(url: str):
 
     if response.status_code == 200:
         print("发送下载请求到kubespider成功")
+        download_urls.add(url)
     else:
         print("发送下载请求到kubespider失败：", response.text)
 
