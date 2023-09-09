@@ -414,7 +414,7 @@ class Rss:
                         media_info.set_download_info(download_setting=match_info.get("download_setting"),
                                                      save_path=match_info.get("save_path"))
                         # 插入数据库历史记录
-                        # self.rsshelper.insert_rss_torrents(media_info)
+                        self.rsshelper.insert_rss_torrents(media_info)
                         # 加入下载列表
                         if media_info not in rss_download_torrents:
                             rss_download_torrents.append(media_info)
@@ -677,7 +677,7 @@ class Rss:
                     continue
 
                 # 插入数据库历史记录
-                self.rsshelper.insert_rss_torrents(item)
+                # self.rsshelper.insert_rss_torrents(item)
 
                 if item.over_edition:
                     # 更新洗版订阅
