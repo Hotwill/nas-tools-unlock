@@ -32,7 +32,7 @@ class Rss:
         self.init_config()
         self.download_sites = [XL720("https://www.xl720.com", "https://www.xl720.com/?s={key_word}"),
                                DownloadSite("https://www.dbmp4.com"),
-                               DownloadSite("https://www.bdys03.com", "https://www.bdys03.com/search/{key_word}"),
+                               DownloadSite("https://www.bdys10.com", "https://www.bdys10.com/search/{key_word}"),
                                # DownloadSite("https://www.btdx8.com", "https://www.btdx8.com/?s={key_word}"),
                                # DownloadSite("https://www.dy2018.com"),
                                # DownloadSite("https://www.ciligod.com/movie")
