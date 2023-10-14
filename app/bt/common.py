@@ -1,5 +1,6 @@
 import asyncio
 import re
+import traceback
 from urllib import parse
 from urllib.parse import unquote
 
@@ -173,7 +174,7 @@ class DownloadSite:
             log.info("使用requests-html获取下载链接")
             return self.get_download_url_use_rhtml(url, media_name)
         except Exception as e:
-            log.error("catch exception: {0}".format(str(e)))
+            log.error("catch exception: {0}".format(traceback.format_exc()))
 
     def get_download_url_use_rhtml(self, url, media_name):
         async def load_page_helper(url: str):

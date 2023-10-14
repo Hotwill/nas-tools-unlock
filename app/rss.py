@@ -1,3 +1,4 @@
+import traceback
 from threading import Lock
 
 from app.downloader import Downloader
@@ -109,7 +110,8 @@ class Rss:
                     try:
                         site.download(key_word, year, episodes, media_info.get_message_image())
                     except Exception as e:
-                        log.error("在网站[{}]上下载发生异常：{}".format(site.home_page, str(e)))
+                        log.error("在网站[{}]上下载发生异常：{}".format(site.home_page, traceback.format_exc()))
+
                         continue
 
     def download_movie_on_www(self):
