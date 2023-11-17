@@ -129,7 +129,7 @@ class Rss:
 
             media_info = self.media.get_media_info(tmdbid, name, year, MediaType.MOVIE)
             if not media_info or not media_info.tmdb_info:
-                log.error("获取媒体信息失败：{0}".format(" ".join(rss_info)))
+                log.error("获取媒体信息失败：{0}".format(name))
 
             exist_flag, _, _ = self.downloader.check_exists_medias(meta_info=media_info)
             if exist_flag:
