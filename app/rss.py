@@ -33,6 +33,7 @@ class Rss:
         self.init_config()
         self.download_sites = [XL720("https://www.xl720.com", "https://www.xl720.com/?s={key_word}"),
                                DownloadSite("https://www.dbmp4.com"),
+                               DownloadSite("https://www.mp4us.com"),
                                DownloadSite("https://www.bdys10.com", "https://www.bdys10.com/search/{key_word}"),
                                # DownloadSite("https://www.btdx8.com", "https://www.btdx8.com/?s={key_word}"),
                                # DownloadSite("https://www.dy2018.com"),
@@ -127,9 +128,15 @@ class Rss:
             year = rss_info.YEAR
             tmdbid = rss_info.TMDBID
 
-            media_info = self.media.get_media_info(tmdbid, name, year, MediaType.MOVIE)
+            media_info = MetaInfo(title=name)
+            media_info.tmdb_id = tmdbid
+            media_info.type = MediaType.MOVIE
+            media_info.title = name
+            media_info.year = year
+            media_info.set_tmdb_info(self.media.get_tmdb_info(mtype=media_info.type, tmdbid=media_info.tmdb_id))
             if not media_info or not media_info.tmdb_info:
                 log.error("获取媒体信息失败：{0}".format(name))
+                return
 
             exist_flag, _, _ = self.downloader.check_exists_medias(meta_info=media_info)
             if exist_flag:

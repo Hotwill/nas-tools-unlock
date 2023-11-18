@@ -1,4 +1,5 @@
 import asyncio
+import pprint
 import re
 import traceback
 from urllib import parse
@@ -139,7 +140,7 @@ class DownloadSite:
         print("search keyword: ", search_key_word)
         mg = MagicGoogle()
         for i in mg.search(query=search_key_word, num=1):
-            # pprint.pprint(i)
+            pprint.pprint(i)
             log.info("通过关键词\"{0}\"找到网页：{1}".format(key_word, i['url']))
             return i['url']
         return self.search_from_bing(key_word, year)
@@ -157,13 +158,14 @@ class DownloadSite:
     def search_from_bing(self, key_word: str, year: str):
         bing_search_url = "https://www.bing.com/search?q={0}".format(
             "{0} site:{1}".format(key_word + " " + year, self.home_page))
+        log.info("bing_search_url: ", bing_search_url)
         html = etree.HTML(requests.get(bing_search_url, headers=self.headers).text)
-        url = html.xpath("//*[@id='b_results']/li[1]/div[2]/div/cite")
+        url = html.xpath('//*[@id="b_results"]/li[1]/h2/a/@href')
         if url:
-            log.info("找到《{0}》的网页：{1}".format(key_word, url))
+            log.info("找到《{0}》的网页：{1} using bing".format(key_word, url))
             return url[0]
         else:
-            log.info("error: can't find url")
+            log.info("error: can't find url using bing")
             return ""
 
     def get_download_url_all(self, url, media_name):
